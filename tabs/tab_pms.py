@@ -13,79 +13,98 @@ class PhotometricStereoTab:
         self.frame = ctk.CTkFrame(tabview.tab(TAB_LABEL))
 
         self.image_paths = [None] * 4
+        self.target_image_paths = [None] * 4
         self.image_labels = []
+        self.target_labels = []
         self.manual_inputs = []
 
-        self.mode_switch = ctk.CTkSegmentedButton(self.frame, values=["小球标定", "手动输入"], command=self.switch_mode)
-        self.mode_switch.pack(pady=10)
+        self.main_container = ctk.CTkFrame(self.frame)
+        self.main_container.pack(fill="both", expand=True, padx=10, pady=10)
+        self.main_container.grid_columnconfigure((0, 1, 2), weight=1)
 
-        self.container = ctk.CTkFrame(self.frame)
-        self.container.pack(fill="both", expand=True)
+        self.left_frame = ctk.CTkFrame(self.main_container)
+        self.left_frame.grid(row=0, column=0, sticky="nsew", padx=10)
 
-        self.calib_frame = ctk.CTkFrame(self.container)
-        self.manual_frame = ctk.CTkFrame(self.container)
+        self.middle_frame = ctk.CTkFrame(self.main_container)
+        self.middle_frame.grid(row=0, column=1, sticky="nsew", padx=10)
+
+        self.right_frame = ctk.CTkFrame(self.main_container)
+        self.right_frame.grid(row=0, column=2, sticky="nsew", padx=10)
 
         self.init_calibration_ui()
+        self.init_target_ui()
         self.init_manual_ui()
-
-        self.calib_frame.pack(fill="both", expand=True)
-
-    def switch_mode(self, mode):
-        for widget in self.container.winfo_children():
-            widget.pack_forget()
-        if mode == "小球标定":
-            self.calib_frame.pack(fill="both", expand=True)
-        else:
-            self.manual_frame.pack(fill="both", expand=True)
+        self.init_result_ui()
 
     def init_calibration_ui(self):
-        ctk.CTkLabel(self.calib_frame, text="拖入或选择4张小球图像", font=ctk.CTkFont(size=16)).pack(pady=10)
+        ctk.CTkLabel(self.left_frame, text="小球光源标定", font=ctk.CTkFont(size=16)).pack(pady=10)
 
-        self.image_grid = ctk.CTkFrame(self.calib_frame)
-        self.image_grid.pack()
+        grid = ctk.CTkFrame(self.left_frame)
+        grid.pack()
 
         for i in range(4):
-            frame = ctk.CTkFrame(self.image_grid, width=150, height=150, border_width=1, border_color="gray")
-            frame.grid(row=i//2, column=i%2, padx=10, pady=10)
+            frame = ctk.CTkFrame(grid, width=140, height=140, border_width=1, border_color="gray")
+            frame.grid(row=i//2, column=i%2, padx=5, pady=5)
             frame.pack_propagate(False)
 
-            label = ctk.CTkLabel(frame, text=f"图像{i+1}", font=ctk.CTkFont(size=14))
+            label = ctk.CTkLabel(frame, text=f"图像{i+1}")
             label.pack(expand=True)
             label.drop_target_register(DND_FILES)
-            label.dnd_bind("<<Drop>>", lambda e, idx=i: self.on_drop(e, idx))
+            label.dnd_bind("<<Drop>>", lambda e, idx=i: self.on_drop(e, idx, mode='calib'))
             self.image_labels.append(label)
 
-        select_btn = ctk.CTkButton(self.calib_frame, text="选择图片", command=self.select_images)
-        select_btn.pack(pady=10)
+        ctk.CTkButton(self.left_frame, text="选择图像", command=self.select_images).pack(pady=10)
 
-        calc_btn = ctk.CTkButton(self.calib_frame, text="执行标定", command=self.calculate_light_direction)
-        calc_btn.pack(pady=10)
+    def init_target_ui(self):
+        ctk.CTkLabel(self.middle_frame, text="目标物体图像", font=ctk.CTkFont(size=16)).pack(pady=10)
 
-    def init_manual_ui(self):
-        ctk.CTkLabel(self.manual_frame, text="手动输入4个光源方向", font=ctk.CTkFont(size=16)).pack(pady=10)
-
-        input_grid = ctk.CTkFrame(self.manual_frame)
-        input_grid.pack(pady=10)
+        grid = ctk.CTkFrame(self.middle_frame)
+        grid.pack()
 
         for i in range(4):
-            row = ctk.CTkFrame(input_grid)
-            row.pack(pady=5)
-            label = ctk.CTkLabel(row, text=f"光源 {i+1}: ")
-            label.pack(side="left", padx=(0, 5))
+            frame = ctk.CTkFrame(grid, width=140, height=140, border_width=1, border_color="gray")
+            frame.grid(row=i//2, column=i%2, padx=5, pady=5)
+            frame.pack_propagate(False)
+
+            label = ctk.CTkLabel(frame, text=f"目标图{i+1}")
+            label.pack(expand=True)
+            label.drop_target_register(DND_FILES)
+            label.dnd_bind("<<Drop>>", lambda e, idx=i: self.on_drop(e, idx, mode='target'))
+            self.target_labels.append(label)
+
+        ctk.CTkButton(self.middle_frame, text="选择目标图像", command=self.select_target_images).pack(pady=10)
+        ctk.CTkButton(self.middle_frame, text="执行标定", command=self.calculate_light_direction).pack(pady=10)
+
+    def init_manual_ui(self):
+        ctk.CTkLabel(self.right_frame, text="手动输入光源方向", font=ctk.CTkFont(size=16)).pack(pady=10)
+
+        for i in range(4):
+            row = ctk.CTkFrame(self.right_frame)
+            row.pack(pady=5, fill="x")
+            ctk.CTkLabel(row, text=f"光源{i+1}:").pack(side="left", padx=5)
             entry = ctk.CTkEntry(row, placeholder_text="x y z")
             entry.pack(side="left", fill="x", expand=True, padx=5)
             self.manual_inputs.append(entry)
 
+    def init_result_ui(self):
+        ctk.CTkLabel(self.right_frame, text="计算结果展示区域", font=ctk.CTkFont(size=16)).pack(pady=(30, 5))
+        ctk.CTkLabel(self.right_frame, text="（法线图/深度图 可在此处展示）", font=ctk.CTkFont(size=12)).pack(pady=5)
+
     def select_images(self):
         paths = filedialog.askopenfilenames(filetypes=[("Images", "*.png *.jpg *.jpeg *.bmp")])
         for i, path in enumerate(paths[:4]):
-            self.load_image(i, path)
+            self.load_image(i, path, mode='calib')
 
-    def on_drop(self, event, idx):
+    def select_target_images(self):
+        paths = filedialog.askopenfilenames(filetypes=[("Images", "*.png *.jpg *.jpeg *.bmp")])
+        for i, path in enumerate(paths[:4]):
+            self.load_image(i, path, mode='target')
+
+    def on_drop(self, event, idx, mode):
         path = self.frame.winfo_toplevel().tk.splitlist(event.data)[0]
-        self.load_image(idx, path)
+        self.load_image(idx, path, mode)
 
-    def load_image(self, idx, path):
+    def load_image(self, idx, path, mode):
         if not os.path.isfile(path):
             return
         try:
@@ -93,26 +112,35 @@ class PhotometricStereoTab:
             img.thumbnail((140, 140))
             tk_img = ctk.CTkImage(light_image=img.copy(), dark_image=img.copy(), size=img.size)
 
-            self.image_labels[idx].configure(image=tk_img, text="")
-            self.image_labels[idx].image = tk_img
-
             save_dir = os.path.join(os.path.dirname(__file__), "..", "save", "pms")
             os.makedirs(save_dir, exist_ok=True)
             ext = os.path.splitext(path)[-1].lower()
-            save_name = f"image_{idx+1}{ext}"
-            save_path = os.path.join(save_dir, save_name)
-            img.save(save_path)
 
-            self.image_paths[idx] = save_path
+            if mode == 'calib':
+                self.image_labels[idx].configure(image=tk_img, text="")
+                self.image_labels[idx].image = tk_img
+                save_name = f"image_{idx+1}{ext}"
+                self.image_paths[idx] = os.path.join(save_dir, save_name)
+                img.save(self.image_paths[idx])
+
+            elif mode == 'target':
+                self.target_labels[idx].configure(image=tk_img, text="")
+                self.target_labels[idx].image = tk_img
+                save_name = f"target_{idx+1}{ext}"
+                self.target_image_paths[idx] = os.path.join(save_dir, save_name)
+                img.save(self.target_image_paths[idx])
 
         except Exception as e:
             print(f"加载图像失败: {e}")
 
     def calculate_light_direction(self):
-        print("[DEBUG] 调用光照方向计算函数")
-        print("已保存图像路径:")
+        print("[DEBUG] 执行标定")
+        print("小球图像路径:")
         for i, p in enumerate(self.image_paths):
-            print(f"图像{i+1}: {p}")
-        print("手动输入光源向量:")
-        for i, entry in enumerate(self.manual_inputs):
-            print(f"光源{i+1}: {entry.get()}")
+            print(f"球{i+1}: {p}")
+        print("目标图像路径:")
+        for i, p in enumerate(self.target_image_paths):
+            print(f"目标{i+1}: {p}")
+        print("手动输入向量:")
+        for i, e in enumerate(self.manual_inputs):
+            print(f"光源{i+1}: {e.get()}")
