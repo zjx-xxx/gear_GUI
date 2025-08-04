@@ -22,7 +22,7 @@ class AppMain:
         ctk.set_default_color_theme("blue")
 
         self.root.title("多标签项目管理器")
-        self.root.geometry("1200x850")
+        self.root.geometry("1200x1000")
 
         self.main_frame = ctk.CTkFrame(self.root)
         self.main_frame.pack(fill="both", expand=True)
@@ -37,7 +37,7 @@ class AppMain:
         tab_order = [
             ("tab_file_manager", "FileManager"),
             ("tab_example", "Example"),
-            ("tab_settings", "Settings"),
+            ("tab_pms", "PhotometricStereoTab"),
         ]
         for module_name, class_name in tab_order:
             module = importlib.import_module(f"tabs.{module_name}")
