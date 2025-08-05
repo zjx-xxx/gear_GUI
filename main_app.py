@@ -21,8 +21,8 @@ class AppMain:
         ctk.set_appearance_mode("Dark")
         ctk.set_default_color_theme("blue")
 
-        self.root.title("多标签项目管理器")
-        self.root.geometry("1200x1000")
+        self.root.title("齿轮损伤识别与评估系统")
+        self.root.geometry("1600x1050")
 
         self.main_frame = ctk.CTkFrame(self.root)
         self.main_frame.pack(fill="both", expand=True)
@@ -40,9 +40,9 @@ class AppMain:
             ("tab_pms", "PhotometricStereoTab"),
         ]
         for module_name, class_name in tab_order:
-            module = importlib.import_module(f"tabs.{module_name}")
-            tab_class = getattr(module, class_name, None)
-            tab_label = getattr(module, 'TAB_LABEL', class_name)
+            module = importlib.import_module(f"tabs.{module_name}") # import对应名字的python文件
+            tab_class = getattr(module, class_name, None)  #从 module 模块中 获取名为 class_name 的类，如果找不到该类，则返回 None。
+            tab_label = getattr(module, 'TAB_LABEL', class_name)  #从 module 模块中 获取名为 TAB_LABEL 的部分，如果找不到该名称，则返回 class_name,用class_name作为标签页的名称。
             if tab_class:
                 self.tabview.add(tab_label)
                 instance = tab_class(self.tabview)
