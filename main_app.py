@@ -37,6 +37,7 @@ class AppMain:
         tab_order = [
             ("tab_file_manager", "FileManager"),
             ("tab_example", "Example"),
+            ("tab_nn", "NNPrediction"),
             ("tab_pms", "PhotometricStereoTab"),
         ]
         for module_name, class_name in tab_order:
