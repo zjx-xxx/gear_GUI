@@ -31,9 +31,9 @@ class NNPrediction:
         # --- 初始化界面模块 ---
         self.init_input_ui()
         self.init_output_ui()
-        self.init_log_ui()
+        self.init_bottom_ui()
 
-    # ... (init_input_ui, init_output_ui, init_log_ui 等其他所有方法保持完全不变) ...
+
     def init_input_ui(self):
         """初始化左侧的输入图像区域"""
         container = ctk.CTkFrame(self.frame)
@@ -76,15 +76,49 @@ class NNPrediction:
         self.output_image_label = ctk.CTkLabel(container, text="等待预测结果", font=zh_font(14))
         self.output_image_label.pack(fill="both", expand=True, padx=20, pady=20)
 
-    def init_log_ui(self):
-        """初始化底部的日志输出区域"""
-        container = ctk.CTkFrame(self.frame)
-        container.grid(row=1, column=0, columnspan=2, padx=10, pady=10, sticky="ew")
+    def init_bottom_ui(self):
+        """初始化底部的“Annotation”和“日志”区域"""
+        # 1. 创建一个容纳底部所有内容的父容器，它依然横跨整个界面
+        bottom_container = ctk.CTkFrame(self.frame)
+        bottom_container.grid(row=1, column=0, columnspan=2, padx=10, pady=10, sticky="ew")
+
+        # 2. 在父容器内创建两列网格，并按 1:2 的权重分配宽度
+        bottom_container.grid_columnconfigure(0, weight=2)  # 左侧日志区占2/3
+        bottom_container.grid_columnconfigure(1, weight=1)  # 右侧标注区占1/3
+
+        # --- 左侧：输出日志区域 ---
+        log_frame = ctk.CTkFrame(bottom_container)
+        log_frame.grid(row=0, column=0, padx=(0, 5), pady=0, sticky="nsew")
+        log_frame.grid_rowconfigure(1, weight=1) # 让文本框可以垂直扩展
+        log_frame.grid_columnconfigure(0, weight=1) # 让文本框可以水平扩展
+
+        ctk.CTkLabel(log_frame, text="输出日志", font=zh_font(16, "bold")).grid(row=0, column=0, pady=(5, 5), padx=10, sticky="w")
         
-        ctk.CTkLabel(container, text="输出日志", font=zh_font(16, "bold")).pack(pady=(5, 5), anchor="w", padx=10)
+        # 将原来的 log_textbox 放入 log_frame
+        self.log_textbox = ctk.CTkTextbox(log_frame, font=zh_font(12), state="disabled")
+        self.log_textbox.grid(row=1, column=0, padx=10, pady=(0, 10), sticky="nsew")
+
+        # --- 右侧：Annotation 区域 ---
+        annotation_frame = ctk.CTkFrame(bottom_container)
+        annotation_frame.grid(row=0, column=1, padx=(5, 0), pady=0, sticky="nsew")
         
-        self.log_textbox = ctk.CTkTextbox(container, height=150, font=zh_font(12), state="disabled")
-        self.log_textbox.pack(fill="x", expand=True, padx=10, pady=(0, 10))
+        ctk.CTkLabel(annotation_frame, text="Annotation", font=zh_font(16, "bold")).pack(pady=(5, 10), anchor="w", padx=10)
+        
+        # a. 损伤类型下拉框
+        damage_type_frame = ctk.CTkFrame(annotation_frame, fg_color="transparent")
+        damage_type_frame.pack(fill="x", padx=10, pady=5)
+        ctk.CTkLabel(damage_type_frame, text="损伤类型:", font=zh_font(14)).pack(side="left")
+        self.damage_type_combo = ctk.CTkComboBox(damage_type_frame, values=["pitting", "spalling", "scrape"], font=zh_font(12))
+        self.damage_type_combo.pack(side="left", padx=10, expand=True, fill="x")
+        self.damage_type_combo.set("pitting") # 设置一个默认值
+
+        # b. 寿命预测输入框
+        life_pred_frame = ctk.CTkFrame(annotation_frame, fg_color="transparent")
+        life_pred_frame.pack(fill="x", padx=10, pady=5)
+        ctk.CTkLabel(life_pred_frame, text="寿命预测:", font=zh_font(14)).pack(side="left")
+        self.life_prediction_entry = ctk.CTkEntry(life_pred_frame, font=zh_font(12), placeholder_text="e.g., 1.5")
+        self.life_prediction_entry.pack(side="left", padx=10, expand=True, fill="x")
+        ctk.CTkLabel(life_pred_frame, text="年", font=zh_font(14)).pack(side="left")
 
     def select_input_image(self):
         """打开文件对话框选择单个图像文件"""
