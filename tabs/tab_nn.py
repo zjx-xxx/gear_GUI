@@ -89,12 +89,29 @@ class NNPrediction:
         # --- 左侧：输出日志区域 ---
         log_frame = ctk.CTkFrame(bottom_container)
         log_frame.grid(row=0, column=0, padx=(0, 5), pady=0, sticky="nsew")
-        log_frame.grid_rowconfigure(1, weight=1) # 让文本框可以垂直扩展
-        log_frame.grid_columnconfigure(0, weight=1) # 让文本框可以水平扩展
-
-        ctk.CTkLabel(log_frame, text="输出日志", font=zh_font(16, "bold")).grid(row=0, column=0, pady=(5, 5), padx=10, sticky="w")
         
-        # 将原来的 log_textbox 放入 log_frame
+        log_frame.grid_columnconfigure(0, weight=1)
+        log_frame.grid_rowconfigure(1, weight=1)
+
+        # --- 这里是关键修改 ---
+        # 1. 创建一个新的框架来容纳标题和Clear按钮，以便将它们放在同一行
+        title_frame = ctk.CTkFrame(log_frame, fg_color="transparent")
+        title_frame.grid(row=0, column=0, padx=10, pady=(5, 5), sticky="ew")
+
+        # 2. 将“输出日志”标题放入这个新框架
+        ctk.CTkLabel(title_frame, text="输出日志", font=zh_font(16, "bold")).pack(side="left")
+
+        # 3. 在标题旁边添加Clear按钮
+        clear_button = ctk.CTkButton(
+            title_frame, 
+            text="Clear", 
+            font=zh_font(12), 
+            width=60,  # 给一个较小的固定宽度
+            command=self.clear_log_textbox # 绑定我们新创建的方法
+        )
+        clear_button.pack(side="right", padx=10)
+
+        # 日志文本框的位置保持不变
         self.log_textbox = ctk.CTkTextbox(log_frame, font=zh_font(12), state="disabled")
         self.log_textbox.grid(row=1, column=0, padx=10, pady=(0, 10), sticky="nsew")
 
@@ -169,6 +186,17 @@ class NNPrediction:
         self.log_textbox.insert("end", msg + "\n")
         self.log_textbox.see("end") 
         self.log_textbox.configure(state="disabled")
+
+
+    def clear_log_textbox(self):
+        """清空日志文本框的内容"""
+        # 必须先将状态设为"normal"才能修改内容
+        self.log_textbox.configure(state="normal")
+        # 删除从开头(1.0)到结尾(END)的所有文本
+        self.log_textbox.delete("1.0", ctk.END)
+        # 将状态设回"disabled"，防止用户直接编辑
+        self.log_textbox.configure(state="disabled")
+
 
     def _display_image(self, label_widget, image_path):
         """一个辅助函数，用于加载图像并显示在指定的CTkLabel上"""
