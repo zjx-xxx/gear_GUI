@@ -7,7 +7,7 @@ import os
 from PIL import Image
 import subprocess
 
-TAB_LABEL = "神经网络损伤预测"
+TAB_LABEL = "损伤预测"
 
 def zh_font(size=14, weight="normal"):
     return ctk.CTkFont(family="Microsoft YaHei", size=size, weight=weight)
@@ -41,14 +41,23 @@ class NNPrediction:
 
         ctk.CTkLabel(container, text="输入图像", font=zh_font(16, "bold")).pack(pady=10)
 
-        self.input_image_label = ctk.CTkLabel(container, text="请选择一张图片", font=zh_font(14))
-        self.input_image_label.pack(fill="both", expand=True, padx=20, pady=20)
+        # --- 这里是关键修改 ---
+        # 1. 创建一个专门用于显示图片的可伸缩框架
+        #    这个框架会占据大部分空间
+        image_container = ctk.CTkFrame(container, fg_color="transparent")
+        image_container.pack(fill="both", expand=True, padx=20, pady=10)
+
+        # 2. 将图片标签放入这个新的框架中
+        #    这样它的尺寸变化只会影响 image_container 内部
+        self.input_image_label = ctk.CTkLabel(image_container, text="请选择一张图片", font=zh_font(14))
+        self.input_image_label.pack(expand=True)
         
+        # 3. 按钮框架现在被 pack 在 image_container 之后，不会被挤走
         button_frame = ctk.CTkFrame(container)
         button_frame.pack(pady=10, fill="x", padx=20)
         
         ctk.CTkButton(button_frame, text="选择图像", font=zh_font(14), command=self.select_input_image).pack(side="left", expand=True, padx=5)
-        ctk.CTkButton(button_frame, text="执行预测", font=zh_font(14), command=self.run_prediction).pack(side="left", expand=True, padx=5)
+        ctk.CTkButton(button_frame, text="执行预测", font=zh_font(14), command=self.run_prediction).pack(side="left", expand=True, padx=5)    
 
     def init_output_ui(self):
         """初始化右侧的输出结果区域"""
