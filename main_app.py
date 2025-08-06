@@ -35,7 +35,7 @@ class AppMain:
     def load_tabs(self):
         tab_dir = os.path.join(os.path.dirname(__file__), 'tabs')
         tab_order = [
-            ("tab_file_manager", "FileManager"),
+            # ("tab_file_manager", "FileManager"),
             # ("tab_example", "Example"),
             ("tab_nn", "NNPrediction"),
             ("tab_pms", "PhotometricStereoTab"),

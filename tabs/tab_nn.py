@@ -41,23 +41,30 @@ class NNPrediction:
 
         ctk.CTkLabel(container, text="输入图像", font=zh_font(16, "bold")).pack(pady=10)
 
-        # --- 这里是关键修改 ---
-        # 1. 创建一个专门用于显示图片的可伸缩框架
-        #    这个框架会占据大部分空间
+        # 这个框架依然是可伸缩的，占据主要空间
         image_container = ctk.CTkFrame(container, fg_color="transparent")
         image_container.pack(fill="both", expand=True, padx=20, pady=10)
 
-        # 2. 将图片标签放入这个新的框架中
-        #    这样它的尺寸变化只会影响 image_container 内部
+        # --- 这里是关键修改 ---
+
+        # 1. 图片标签依然在 image_container 中，但要让它填充并扩展，为下方的按钮留出空间
         self.input_image_label = ctk.CTkLabel(image_container, text="请选择一张图片", font=zh_font(14))
-        self.input_image_label.pack(expand=True)
-        
-        # 3. 按钮框架现在被 pack 在 image_container 之后，不会被挤走
-        button_frame = ctk.CTkFrame(container)
-        button_frame.pack(pady=10, fill="x", padx=20)
-        
-        ctk.CTkButton(button_frame, text="选择图像", font=zh_font(14), command=self.select_input_image).pack(side="left", expand=True, padx=5)
-        ctk.CTkButton(button_frame, text="执行预测", font=zh_font(14), command=self.run_prediction).pack(side="left", expand=True, padx=5)    
+        self.input_image_label.pack(fill="both", expand=True, pady=(0, 10)) # 增加了 pady 让按钮和图片有间距
+
+        # 2. 将 button_frame 的父组件从 container 改为 image_container
+        #    并将其 pack 到 image_container 的底部
+        button_frame = ctk.CTkFrame(image_container, fg_color="transparent") # 背景设为透明以融入
+        button_frame.pack(side="bottom", fill="x")
+
+        # 3. 按钮的 grid 布局保持不变，它现在会在 button_frame 内平分宽度
+        button_frame.grid_columnconfigure((0, 1), weight=1)
+
+        select_button = ctk.CTkButton(button_frame, text="选择图像", font=zh_font(14), command=self.select_input_image)
+        select_button.grid(row=0, column=0, padx=(0, 5), sticky="ew")
+
+        predict_button = ctk.CTkButton(button_frame, text="执行预测", font=zh_font(14), command=self.run_prediction)
+        predict_button.grid(row=0, column=1, padx=(5, 0), sticky="ew")
+
 
     def init_output_ui(self):
         """初始化右侧的输出结果区域"""
