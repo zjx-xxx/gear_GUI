@@ -119,23 +119,37 @@ class NNPrediction:
         annotation_frame = ctk.CTkFrame(bottom_container)
         annotation_frame.grid(row=0, column=1, padx=(5, 0), pady=0, sticky="nsew")
         
-        ctk.CTkLabel(annotation_frame, text="Annotation", font=zh_font(16, "bold")).pack(pady=(5, 10), anchor="w", padx=10)
+        # --- 使用 grid 布局来更精确地控制 Annotation 区域内部 ---
+        annotation_frame.grid_columnconfigure(0, weight=1) # 让内容水平扩展
+
+        # 标题
+        ctk.CTkLabel(annotation_frame, text="Annotation", font=zh_font(16, "bold")).grid(row=0, column=0, padx=10, pady=(5, 10), sticky="w")
         
-        # a. 损伤类型下拉框
+        # 损伤类型 (放在第1行)
         damage_type_frame = ctk.CTkFrame(annotation_frame, fg_color="transparent")
-        damage_type_frame.pack(fill="x", padx=10, pady=5)
+        damage_type_frame.grid(row=1, column=0, padx=10, pady=5, sticky="ew")
         ctk.CTkLabel(damage_type_frame, text="损伤类型:", font=zh_font(14)).pack(side="left")
         self.damage_type_combo = ctk.CTkComboBox(damage_type_frame, values=["pitting", "spalling", "scrape"], font=zh_font(12))
         self.damage_type_combo.pack(side="left", padx=10, expand=True, fill="x")
-        self.damage_type_combo.set("pitting") # 设置一个默认值
+        self.damage_type_combo.set("pitting")
 
-        # b. 寿命预测输入框
+        # 寿命预测 (放在第2行)
         life_pred_frame = ctk.CTkFrame(annotation_frame, fg_color="transparent")
-        life_pred_frame.pack(fill="x", padx=10, pady=5)
+        life_pred_frame.grid(row=2, column=0, padx=10, pady=5, sticky="ew")
         ctk.CTkLabel(life_pred_frame, text="寿命预测:", font=zh_font(14)).pack(side="left")
         self.life_prediction_entry = ctk.CTkEntry(life_pred_frame, font=zh_font(12), placeholder_text="e.g., 1.5")
         self.life_prediction_entry.pack(side="left", padx=10, expand=True, fill="x")
         ctk.CTkLabel(life_pred_frame, text="年", font=zh_font(14)).pack(side="left")
+
+        # --- 新增：Reasons 文本框 ---
+        ctk.CTkLabel(annotation_frame, text="Reasons:", font=zh_font(14)).grid(row=3, column=0, padx=10, pady=(10, 0), sticky="nw")
+        self.reasons_textbox = ctk.CTkTextbox(annotation_frame, font=zh_font(14), height=75)
+        self.reasons_textbox.grid(row=4, column=0, padx=10, pady=5, sticky="ew")
+
+        # --- 新增：Submit 按钮 ---
+        submit_button = ctk.CTkButton(annotation_frame, text="Submit", command=self.submit_annotation)
+        # 将按钮放在最后一行，并用 sticky="e" 使其靠右对齐
+        submit_button.grid(row=5, column=0, padx=10, pady=10, sticky="e")
 
     def select_input_image(self):
         """打开文件对话框选择单个图像文件"""
@@ -196,6 +210,25 @@ class NNPrediction:
         self.log_textbox.delete("1.0", ctk.END)
         # 将状态设回"disabled"，防止用户直接编辑
         self.log_textbox.configure(state="disabled")
+
+
+    def submit_annotation(self):
+        """提交标注信息的占位符函数"""
+        damage_type = self.damage_type_combo.get()
+        life_pred = self.life_prediction_entry.get()
+        # .get("1.0", ctk.END) 用于获取Textbox中的所有文本
+        # .strip() 用于移除开头和结尾的空白符
+        reasons = self.reasons_textbox.get("1.0", ctk.END).strip()
+
+        # 在控制台打印获取到的信息，以验证功能
+        print("--- Submitting Annotation ---")
+        print(f"Damage Type: {damage_type}")
+        print(f"Life Prediction: {life_pred} 年")
+        print(f"Reasons: {reasons if reasons else 'N/A'}")
+        print("TODO: Implement database saving logic here.")
+
+        # 也可以在界面上给用户一个反馈
+        self.log_message("Annotation data submitted (see console for details).")
 
 
     def _display_image(self, label_widget, image_path):
